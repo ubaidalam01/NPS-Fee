@@ -96,12 +96,14 @@ export default function LoginPage() {
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-bg px-4">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_#d4ebef_0%,_transparent_55%),radial-gradient(ellipse_at_bottom_right,_#e8f4c8_0%,_transparent_45%)]" />
-      <Card className="relative w-full max-w-md p-8 animate-fade-up">
+      <Card className="relative w-full max-w-md p-5 sm:p-8 animate-fade-up">
         <div className="mb-6 text-center">
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-navy text-lime">
             <GraduationCap className="h-6 w-6" />
           </div>
-          <h1 className="text-2xl font-extrabold text-navy">NPS Fee Manager</h1>
+          <h1 className="text-xl font-extrabold text-navy sm:text-2xl">
+            NPS Fee Manager
+          </h1>
           <p className="mt-1 text-sm text-muted">
             Sign in to manage your school fees
           </p>

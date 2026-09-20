@@ -139,18 +139,20 @@ export function SchoolProfileClient({ school }: { school: School }) {
   const displayPreview = previewUrl || logoUrl || null;
 
   return (
-    <div className="space-y-4 pb-16 lg:pb-0">
+    <div className="space-y-4">
       <PageHeader
         title="School Profile"
         description="Used on receipts and vouchers"
         actions={
-          <Link href="/settings/export">
-            <Button variant="navy">Data Export</Button>
+          <Link href="/settings/export" className="w-full sm:w-auto">
+            <Button variant="navy" className="w-full sm:w-auto">
+              Data Export
+            </Button>
           </Link>
         }
       />
 
-      <Card className="max-w-2xl p-6">
+      <Card className="max-w-2xl p-4 sm:p-6">
         <form onSubmit={save} className="space-y-4">
           <div>
             <Label>School Name</Label>
@@ -240,7 +242,12 @@ export function SchoolProfileClient({ school }: { school: School }) {
               {msg}
             </p>
           ) : null}
-          <Button type="submit" variant="primary" disabled={saving}>
+          <Button
+            type="submit"
+            variant="primary"
+            className="w-full sm:w-auto"
+            disabled={saving}
+          >
             {saving ? "Saving…" : "Save Profile"}
           </Button>
         </form>

@@ -142,17 +142,26 @@ export function FeeStructureClient({
   }
 
   return (
-    <div className="space-y-6 pb-16 lg:pb-0">
+    <div className="space-y-6">
       <PageHeader
         title="Fee Structure"
         description="Class fee matrix and fee heads"
         actions={
           <>
-            <Button variant="outline" onClick={() => setShowHead(true)}>
+            <Button
+              variant="outline"
+              className="w-full sm:w-auto"
+              onClick={() => setShowHead(true)}
+            >
               <Plus className="h-4 w-4" />
               Fee Head
             </Button>
-            <Button variant="primary" onClick={saveMatrix} disabled={saving}>
+            <Button
+              variant="primary"
+              className="w-full sm:w-auto"
+              onClick={saveMatrix}
+              disabled={saving}
+            >
               {saving ? "Saving…" : "Save Matrix"}
             </Button>
           </>
@@ -166,32 +175,79 @@ export function FeeStructureClient({
       ) : null}
 
       <Card>
-        <CardHeader title="Fee Heads" subtitle="Defaults: Tuition (recurring), Exam (non-recurring)" />
-        <div className="flex flex-wrap gap-2 p-5">
+        <CardHeader
+          title="Fee Heads"
+          subtitle="Defaults: Tuition (recurring), Exam (non-recurring)"
+        />
+        <div className="flex flex-wrap gap-2 p-4 sm:p-5">
           {heads.map((h) => (
-            <Badge key={h.id} tone={h.frequency === "recurring" ? "teal" : "navy"}>
-              {h.name} · {h.frequency === "recurring" ? "Recurring" : "Non-recurring"}
+            <Badge
+              key={h.id}
+              tone={h.frequency === "recurring" ? "teal" : "navy"}
+            >
+              {h.name} ·{" "}
+              {h.frequency === "recurring" ? "Recurring" : "Non-recurring"}
             </Badge>
           ))}
           {heads.length === 0 ? (
             <p className="text-sm text-muted">
-              No fee heads yet. Add one, or ensure the school was activated (seeds Tuition Fee & Exam Fee).
+              No fee heads yet. Add one, or ensure the school was activated
+              (seeds Tuition Fee & Exam Fee).
             </p>
           ) : null}
         </div>
       </Card>
 
       <Card>
-        <CardHeader title="Class Fee Matrix" subtitle="Amount (PKR) per class × fee head" />
-        <TableWrap>
+        <CardHeader
+          title="Class Fee Matrix"
+          subtitle="Amount (PKR) per class × fee head"
+        />
+
+        {/* Mobile: stacked per-class cards */}
+        <div className="space-y-3 p-4 md:hidden">
+          {heads.length === 0 ? (
+            <p className="text-sm text-muted">Add a fee head to edit amounts.</p>
+          ) : (
+            classes.map((c) => (
+              <div
+                key={c}
+                className="rounded-xl border border-border/60 bg-sidebar/30 p-4"
+              >
+                <p className="mb-3 text-sm font-bold text-navy">Class {c}</p>
+                <div className="space-y-3">
+                  {heads.map((h) => (
+                    <div key={h.id}>
+                      <Label>{h.name}</Label>
+                      <Input
+                        type="number"
+                        min={0}
+                        value={getAmount(c, h.id)}
+                        onChange={(e) =>
+                          setAmount(c, h.id, Number(e.target.value) || 0)
+                        }
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Desktop / tablet: scrollable matrix */}
+        <TableWrap className="hidden md:block">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-border bg-sidebar/50 text-xs uppercase text-muted">
               <tr>
-                <th className="px-4 py-3 font-semibold sticky left-0 bg-sidebar/50">
+                <th className="sticky left-0 bg-sidebar/50 px-4 py-3 font-semibold">
                   Class
                 </th>
                 {heads.map((h) => (
-                  <th key={h.id} className="px-4 py-3 font-semibold min-w-[140px]">
+                  <th
+                    key={h.id}
+                    className="min-w-[140px] px-4 py-3 font-semibold"
+                  >
                     {h.name}
                   </th>
                 ))}
@@ -200,7 +256,7 @@ export function FeeStructureClient({
             <tbody className="divide-y divide-border/60">
               {classes.map((c) => (
                 <tr key={c}>
-                  <td className="px-4 py-2 font-semibold sticky left-0 bg-card">
+                  <td className="sticky left-0 bg-card px-4 py-2 font-semibold">
                     {c}
                   </td>
                   {heads.map((h) => (
@@ -223,8 +279,8 @@ export function FeeStructureClient({
       </Card>
 
       {showHead ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy/40 p-4 animate-fade-in">
-          <Card className="w-full max-w-md p-6">
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-navy/40 p-0 animate-fade-in sm:items-center sm:p-4">
+          <Card className="w-full max-w-md rounded-b-none p-5 sm:rounded-xl sm:p-6">
             <h2 className="text-lg font-extrabold">Add Fee Head</h2>
             <form onSubmit={addHead} className="mt-4 space-y-3">
               <div>
@@ -252,15 +308,20 @@ export function FeeStructureClient({
                   <option value="non_recurring">Non-recurring</option>
                 </Select>
               </div>
-              <div className="flex justify-end gap-2">
+              <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                 <Button
                   type="button"
                   variant="outline"
+                  className="w-full sm:w-auto"
                   onClick={() => setShowHead(false)}
                 >
                   Cancel
                 </Button>
-                <Button type="submit" variant="primary">
+                <Button
+                  type="submit"
+                  variant="primary"
+                  className="w-full sm:w-auto"
+                >
                   Add
                 </Button>
               </div>

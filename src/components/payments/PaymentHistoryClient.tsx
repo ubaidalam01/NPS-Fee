@@ -47,6 +47,7 @@ export function PaymentHistoryClient({
   initialPayments: Row[];
 }) {
   const session = useAppSession();
+  const schoolId = session.schoolId!;
   const schoolName = session.schoolName ?? "School";
   const schoolLogoUrl = session.schoolLogoUrl;
   const schoolAddress = session.schoolAddress;
@@ -72,16 +73,107 @@ export function PaymentHistoryClient({
     });
   }, [payments, from, to, classFilter, sectionFilter]);
 
-  function reprint(p: Row) {
+  async function reprint(p: Row) {
     const s = p.students;
     const v = p.fee_vouchers;
     if (!s || !v) return;
 
+    const supabase = createClient();
+    const [{ data: schoolRow }, { data: voucherItemRows }] = await Promise.all([
+      supabase
+        .from("schools")
+        .select("name, logo_url, address, contact_phone")
+        .eq("id", schoolId)
+        .maybeSingle(),
+      supabase
+        .from("voucher_items")
+        .select("fee_head_name, amount")
+        .eq("voucher_id", p.voucher_id)
+        .order("fee_head_name"),
+    ]);
+
+    let items =
+      voucherItemRows && voucherItemRows.length > 0
+        ? voucherItemRows.map((row) => ({
+            name: row.fee_head_name,
+            amount: Number(row.amount),
+          }))
+        : [];
+
+    // Older vouchers may lack line items — rebuild from fee structure
+    if (items.length === 0) {
+      const [{ data: heads }, { data: structureRows }, { data: voucherStudent }] =
+        await Promise.all([
+          supabase
+            .from("fee_heads")
+            .select("id, name, frequency")
+            .eq("school_id", schoolId),
+          supabase
+            .from("class_fee_structures")
+            .select("fee_head_id, amount")
+            .eq("school_id", schoolId)
+            .eq("class", s.class),
+          supabase
+            .from("fee_vouchers")
+            .select("students(monthly_tuition_fee)")
+            .eq("id", p.voucher_id)
+            .maybeSingle(),
+        ]);
+
+      const tuitionRaw = voucherStudent?.students;
+      const tuitionStudent = Array.isArray(tuitionRaw)
+        ? tuitionRaw[0]
+        : tuitionRaw;
+      const tuition = Number(tuitionStudent?.monthly_tuition_fee ?? 0);
+
+      const rebuilt: {
+        fee_head_id: string | null;
+        fee_head_name: string;
+        amount: number;
+      }[] = [];
+
+      for (const head of heads ?? []) {
+        if (head.frequency === "non_recurring") continue;
+        const row = structureRows?.find((r) => r.fee_head_id === head.id);
+        let amount = Number(row?.amount ?? 0);
+        if (head.name.toLowerCase().includes("tuition") && tuition > 0) {
+          amount = tuition;
+        }
+        if (amount > 0) {
+          rebuilt.push({
+            fee_head_id: head.id,
+            fee_head_name: head.name,
+            amount,
+          });
+        }
+      }
+
+      if (rebuilt.length > 0) {
+        items = rebuilt.map((r) => ({
+          name: r.fee_head_name,
+          amount: r.amount,
+        }));
+        await supabase.from("voucher_items").insert(
+          rebuilt.map((r) => ({
+            voucher_id: p.voucher_id,
+            school_id: schoolId,
+            fee_head_id: r.fee_head_id,
+            fee_head_name: r.fee_head_name,
+            amount: r.amount,
+          }))
+        );
+      }
+    }
+
+    if (items.length === 0) {
+      items = [{ name: "Fee payment", amount: Number(p.amount) }];
+    }
+
     printReceipt({
-      schoolName,
-      schoolLogoUrl,
-      schoolAddress,
-      schoolPhone,
+      schoolName: schoolRow?.name ?? schoolName,
+      schoolLogoUrl: schoolRow?.logo_url ?? schoolLogoUrl,
+      schoolAddress: schoolRow?.address ?? schoolAddress,
+      schoolPhone: schoolRow?.contact_phone ?? schoolPhone,
       receiptNo: p.receipt_no,
       voucherNo: v.voucher_no,
       studentName: s.name,
@@ -92,7 +184,7 @@ export function PaymentHistoryClient({
       billingMonth: v.billing_month,
       amount: Number(p.amount),
       paidAt: p.paid_at,
-      items: [{ name: "Fee payment", amount: Number(p.amount) }],
+      items,
     });
   }
 
@@ -135,7 +227,7 @@ export function PaymentHistoryClient({
   }
 
   return (
-    <div className="space-y-4 pb-16 lg:pb-0">
+    <div className="space-y-4">
       <PageHeader
         title="Payment History"
         description="Filter receipts, reprint PDF, or void a payment"
@@ -180,77 +272,143 @@ export function PaymentHistoryClient({
       </Card>
 
       <Card>
-        <TableWrap>
-          <table className="w-full text-left text-sm">
-            <thead className="border-b border-border bg-sidebar/50 text-xs uppercase text-muted">
-              <tr>
-                <th className="px-4 py-3 font-semibold">Receipt</th>
-                <th className="px-4 py-3 font-semibold">Student</th>
-                <th className="px-4 py-3 font-semibold">Class</th>
-                <th className="px-4 py-3 font-semibold">Month</th>
-                <th className="px-4 py-3 font-semibold">Amount</th>
-                <th className="px-4 py-3 font-semibold">Date</th>
-                <th className="px-4 py-3 font-semibold">Status</th>
-                <th className="px-4 py-3 font-semibold">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border/60">
-              {filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={8}>
-                    <EmptyState message="No payments found." />
-                  </td>
-                </tr>
-              ) : (
-                filtered.map((p) => (
-                  <tr key={p.id} className="hover:bg-sidebar/30">
-                    <td className="px-4 py-3 font-semibold">{p.receipt_no}</td>
-                    <td className="px-4 py-3">{p.students?.name}</td>
-                    <td className="px-4 py-3">
-                      {p.students?.class}-{p.students?.section}
-                    </td>
-                    <td className="px-4 py-3">
-                      {p.fee_vouchers
-                        ? formatMonth(p.fee_vouchers.billing_month)
-                        : "—"}
-                    </td>
-                    <td className="px-4 py-3">{formatPKR(p.amount)}</td>
-                    <td className="px-4 py-3">{formatDate(p.paid_at)}</td>
-                    <td className="px-4 py-3">
-                      <Badge tone={p.is_voided ? "danger" : "teal"}>
-                        {p.is_voided ? "voided" : "paid"}
-                      </Badge>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-wrap gap-1">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => reprint(p)}
-                        >
-                          Reprint
-                        </Button>
-                        {!p.is_voided ? (
+        {filtered.length === 0 ? (
+          <EmptyState message="No payments found." />
+        ) : (
+          <>
+            <ul className="divide-y divide-border/60 md:hidden">
+              {filtered.map((p) => (
+                <li key={p.id} className="space-y-3 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate font-semibold text-navy">
+                        {p.students?.name ?? "—"}
+                      </p>
+                      <p className="text-sm text-muted">{p.receipt_no}</p>
+                    </div>
+                    <Badge tone={p.is_voided ? "danger" : "teal"}>
+                      {p.is_voided ? "voided" : "paid"}
+                    </Badge>
+                  </div>
+                  <dl className="grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
+                    <div>
+                      <dt className="text-xs text-muted">Class</dt>
+                      <dd className="font-medium">
+                        {p.students?.class}-{p.students?.section}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs text-muted">Month</dt>
+                      <dd className="font-medium">
+                        {p.fee_vouchers
+                          ? formatMonth(p.fee_vouchers.billing_month)
+                          : "—"}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs text-muted">Amount</dt>
+                      <dd className="font-bold text-navy">
+                        {formatPKR(p.amount)}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs text-muted">Date</dt>
+                      <dd className="font-medium">{formatDate(p.paid_at)}</dd>
+                    </div>
+                  </dl>
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="min-h-11 w-full sm:flex-1"
+                      onClick={() => reprint(p)}
+                    >
+                      Reprint
+                    </Button>
+                    {!p.is_voided ? (
+                      <Button
+                        size="sm"
+                        variant="danger"
+                        className="min-h-11 w-full sm:flex-1"
+                        onClick={() => {
+                          setVoidError("");
+                          setReason("");
+                          setVoiding(p);
+                        }}
+                      >
+                        Void
+                      </Button>
+                    ) : null}
+                  </div>
+                </li>
+              ))}
+            </ul>
+
+            <TableWrap className="hidden md:block">
+              <table className="w-full text-left text-sm">
+                <thead className="border-b border-border bg-sidebar/50 text-xs uppercase text-muted">
+                  <tr>
+                    <th className="px-4 py-3 font-semibold">Receipt</th>
+                    <th className="px-4 py-3 font-semibold">Student</th>
+                    <th className="px-4 py-3 font-semibold">Class</th>
+                    <th className="px-4 py-3 font-semibold">Month</th>
+                    <th className="px-4 py-3 font-semibold">Amount</th>
+                    <th className="px-4 py-3 font-semibold">Date</th>
+                    <th className="px-4 py-3 font-semibold">Status</th>
+                    <th className="px-4 py-3 font-semibold">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/60">
+                  {filtered.map((p) => (
+                    <tr key={p.id} className="hover:bg-sidebar/30">
+                      <td className="px-4 py-3 font-semibold">{p.receipt_no}</td>
+                      <td className="px-4 py-3">{p.students?.name}</td>
+                      <td className="px-4 py-3">
+                        {p.students?.class}-{p.students?.section}
+                      </td>
+                      <td className="px-4 py-3">
+                        {p.fee_vouchers
+                          ? formatMonth(p.fee_vouchers.billing_month)
+                          : "—"}
+                      </td>
+                      <td className="px-4 py-3">{formatPKR(p.amount)}</td>
+                      <td className="px-4 py-3">{formatDate(p.paid_at)}</td>
+                      <td className="px-4 py-3">
+                        <Badge tone={p.is_voided ? "danger" : "teal"}>
+                          {p.is_voided ? "voided" : "paid"}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-wrap gap-1">
                           <Button
                             size="sm"
-                            variant="danger"
-                            onClick={() => {
-                              setVoidError("");
-                              setReason("");
-                              setVoiding(p);
-                            }}
+                            variant="outline"
+                            onClick={() => reprint(p)}
                           >
-                            Void
+                            Reprint
                           </Button>
-                        ) : null}
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </TableWrap>
+                          {!p.is_voided ? (
+                            <Button
+                              size="sm"
+                              variant="danger"
+                              onClick={() => {
+                                setVoidError("");
+                                setReason("");
+                                setVoiding(p);
+                              }}
+                            >
+                              Void
+                            </Button>
+                          ) : null}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </TableWrap>
+          </>
+        )}
       </Card>
 
       <ConfirmDialog

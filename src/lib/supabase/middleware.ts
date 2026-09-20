@@ -40,10 +40,6 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
   const isPublicAuth =
     path.startsWith("/login") || path.startsWith("/setup");
   const isAppRoute =
@@ -68,6 +64,13 @@ export async function updateSession(request: NextRequest) {
     return redirectTo(pathname);
   }
 
+  // Fast path: read JWT from cookies (no Auth API round trip). Full
+  // getUser() validation happens once in getSessionUser for RSC/layout.
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const user = session?.user ?? null;
+
   // Unauthenticated — protect app routes only
   if (!user) {
     if (isAppRoute || path === "/") {
@@ -76,8 +79,8 @@ export async function updateSession(request: NextRequest) {
     return supabaseResponse;
   }
 
-  // In-app navigation: session check only. Profile/school gate lives in
-  // (app)/layout via requireSchoolAdmin (avoids overlapping profile fetch).
+  // In-app navigation: cookie session check only. Profile/school gate lives
+  // in (app)/layout via requireSchoolAdmin (one getUser + profile fetch).
   if (isAppRoute) {
     return supabaseResponse;
   }

@@ -1,8 +1,13 @@
+import { cache } from "react";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { getSupabaseEnv } from "./env";
 
-export async function createClient() {
+/**
+ * Request-scoped Supabase client. React cache() dedupes within one RSC/action
+ * so layout + pages share a single cookie-bound client.
+ */
+export const createClient = cache(async () => {
   const { url, anonKey, configured } = getSupabaseEnv();
   if (!configured) {
     throw new Error(
@@ -28,4 +33,4 @@ export async function createClient() {
       },
     },
   });
-}
+});

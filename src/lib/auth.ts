@@ -20,8 +20,9 @@ function unwrapSchool(
 }
 
 /**
- * Request-scoped session load. React cache() ensures layout + pages
- * share one getUser + one joined profiles/schools query per render.
+ * Request-scoped session load. React cache() ensures layout + pages +
+ * server actions share one getUser + one joined profiles/schools query
+ * per request (not once per caller).
  */
 export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
   const supabase = await createClient();

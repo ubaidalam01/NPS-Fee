@@ -160,12 +160,16 @@ export function StudentsClient({
     st === "active" ? "teal" : st === "graduated" ? "navy" : "muted";
 
   return (
-    <div className="pb-16 lg:pb-0">
+    <div>
       <PageHeader
         title="Student Manager"
         description="Add, edit, and filter students by class & section"
         actions={
-          <Button variant="primary" onClick={openCreate}>
+          <Button
+            variant="primary"
+            className="w-full sm:w-auto"
+            onClick={openCreate}
+          >
             <Plus className="h-4 w-4" />
             Add Student
           </Button>
@@ -209,74 +213,138 @@ export function StudentsClient({
       </Card>
 
       <Card>
-        <TableWrap>
-          <table className="w-full text-left text-sm">
-            <thead className="border-b border-border bg-sidebar/50 text-xs uppercase tracking-wide text-muted">
-              <tr>
-                <th className="px-4 py-3 font-semibold">Name</th>
-                <th className="px-4 py-3 font-semibold">Father</th>
-                <th className="px-4 py-3 font-semibold">Class</th>
-                <th className="px-4 py-3 font-semibold">GR No.</th>
-                <th className="px-4 py-3 font-semibold">Fee</th>
-                <th className="px-4 py-3 font-semibold">Status</th>
-                <th className="px-4 py-3 font-semibold">Admitted</th>
-                <th className="px-4 py-3 font-semibold">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border/60">
-              {filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={8}>
-                    <EmptyState message="No students match your filters." />
-                  </td>
-                </tr>
-              ) : (
-                filtered.map((s) => (
-                  <tr key={s.id} className="hover:bg-sidebar/30">
-                    <td className="px-4 py-3 font-semibold text-navy">
-                      {s.name}
-                    </td>
-                    <td className="px-4 py-3">{s.father_name}</td>
-                    <td className="px-4 py-3">
-                      {s.class}-{s.section}
-                    </td>
-                    <td className="px-4 py-3">{s.gr_no}</td>
-                    <td className="px-4 py-3">
-                      {formatPKR(s.monthly_tuition_fee)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <Badge tone={statusTone(s.status)}>
-                        {s.status}
-                      </Badge>
-                    </td>
-                    <td className="px-4 py-3">{formatDate(s.admission_date)}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex gap-1">
-                        <button
-                          className="rounded-lg p-1.5 hover:bg-sidebar"
-                          onClick={() => openEdit(s)}
-                        >
-                          <Pencil className="h-4 w-4 text-navy" />
-                        </button>
-                        <button
-                          className="rounded-lg p-1.5 hover:bg-danger/10"
-                          onClick={() => setPendingDelete(s)}
-                        >
-                          <Trash2 className="h-4 w-4 text-danger" />
-                        </button>
-                      </div>
-                    </td>
+        {filtered.length === 0 ? (
+          <EmptyState message="No students match your filters." />
+        ) : (
+          <>
+            {/* Mobile / tablet card list */}
+            <ul className="divide-y divide-border/60 md:hidden">
+              {filtered.map((s) => (
+                <li key={s.id} className="space-y-3 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate font-semibold text-navy">
+                        {s.name}
+                      </p>
+                      <p className="text-sm text-muted">{s.father_name}</p>
+                    </div>
+                    <Badge tone={statusTone(s.status)}>{s.status}</Badge>
+                  </div>
+                  <dl className="grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
+                    <div>
+                      <dt className="text-xs text-muted">Class</dt>
+                      <dd className="font-medium">
+                        {s.class}-{s.section}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs text-muted">GR No.</dt>
+                      <dd className="font-medium">{s.gr_no}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs text-muted">Fee</dt>
+                      <dd className="font-medium">
+                        {formatPKR(s.monthly_tuition_fee)}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs text-muted">Admitted</dt>
+                      <dd className="font-medium">
+                        {formatDate(s.admission_date)}
+                      </dd>
+                    </div>
+                  </dl>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="min-h-11 flex-1"
+                      onClick={() => openEdit(s)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                      Edit
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="danger"
+                      className="min-h-11 flex-1"
+                      onClick={() => setPendingDelete(s)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Delete
+                    </Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+
+            {/* Desktop table */}
+            <TableWrap className="hidden md:block">
+              <table className="w-full text-left text-sm">
+                <thead className="border-b border-border bg-sidebar/50 text-xs uppercase tracking-wide text-muted">
+                  <tr>
+                    <th className="px-4 py-3 font-semibold">Name</th>
+                    <th className="px-4 py-3 font-semibold">Father</th>
+                    <th className="px-4 py-3 font-semibold">Class</th>
+                    <th className="px-4 py-3 font-semibold">GR No.</th>
+                    <th className="px-4 py-3 font-semibold">Fee</th>
+                    <th className="px-4 py-3 font-semibold">Status</th>
+                    <th className="px-4 py-3 font-semibold">Admitted</th>
+                    <th className="px-4 py-3 font-semibold">Actions</th>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </TableWrap>
+                </thead>
+                <tbody className="divide-y divide-border/60">
+                  {filtered.map((s) => (
+                    <tr key={s.id} className="hover:bg-sidebar/30">
+                      <td className="px-4 py-3 font-semibold text-navy">
+                        {s.name}
+                      </td>
+                      <td className="px-4 py-3">{s.father_name}</td>
+                      <td className="px-4 py-3">
+                        {s.class}-{s.section}
+                      </td>
+                      <td className="px-4 py-3">{s.gr_no}</td>
+                      <td className="px-4 py-3">
+                        {formatPKR(s.monthly_tuition_fee)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge tone={statusTone(s.status)}>{s.status}</Badge>
+                      </td>
+                      <td className="px-4 py-3">
+                        {formatDate(s.admission_date)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex gap-1">
+                          <button
+                            type="button"
+                            className="flex h-11 w-11 items-center justify-center rounded-lg hover:bg-sidebar"
+                            onClick={() => openEdit(s)}
+                            aria-label={`Edit ${s.name}`}
+                          >
+                            <Pencil className="h-4 w-4 text-navy" />
+                          </button>
+                          <button
+                            type="button"
+                            className="flex h-11 w-11 items-center justify-center rounded-lg hover:bg-danger/10"
+                            onClick={() => setPendingDelete(s)}
+                            aria-label={`Delete ${s.name}`}
+                          >
+                            <Trash2 className="h-4 w-4 text-danger" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </TableWrap>
+          </>
+        )}
       </Card>
 
       {open ? (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-navy/40 p-4 sm:items-center animate-fade-in">
-          <Card className="w-full max-w-lg p-6 animate-fade-up max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-navy/40 p-0 animate-fade-in sm:items-center sm:p-4">
+          <Card className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-b-none p-5 animate-fade-up sm:rounded-xl sm:p-6">
             <h2 className="text-lg font-extrabold text-navy">
               {editing ? "Edit Student" : "Add Student"}
             </h2>
@@ -397,15 +465,21 @@ export function StudentsClient({
                   {error}
                 </p>
               ) : null}
-              <div className="flex justify-end gap-2 pt-2">
+              <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
                 <Button
                   type="button"
                   variant="outline"
+                  className="w-full sm:w-auto"
                   onClick={() => setOpen(false)}
                 >
                   Cancel
                 </Button>
-                <Button type="submit" variant="primary" disabled={saving}>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  className="w-full sm:w-auto"
+                  disabled={saving}
+                >
                   {saving ? "Saving…" : "Save"}
                 </Button>
               </div>

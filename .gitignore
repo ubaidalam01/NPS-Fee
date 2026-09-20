@@ -45,3 +45,5 @@ scripts/qa-logo-*.png
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+.vercel

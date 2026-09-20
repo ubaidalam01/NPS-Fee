@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { StudentsClient } from "@/components/students/StudentsClient";
 
 export default async function StudentsPage() {
+  // Shares React cache() with layout — no extra auth/profile fetch
   const user = await getAppUser();
   const supabase = await createClient();
   const { data } = await supabase

@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { PaymentHistoryClient } from "@/components/payments/PaymentHistoryClient";
 
 export default async function PaymentHistoryPage() {
+  // Shares React cache() with layout — no extra auth/profile fetch
   const user = await getAppUser();
   const supabase = await createClient();
   const schoolId = user.schoolId!;

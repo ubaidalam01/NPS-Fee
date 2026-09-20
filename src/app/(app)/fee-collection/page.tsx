@@ -4,6 +4,7 @@ import { FeeCollectionClient } from "@/components/fee/FeeCollectionClient";
 import { toBillingMonth } from "@/lib/utils";
 
 export default async function FeeCollectionPage() {
+  // Shares React cache() with layout — no extra auth/profile fetch
   const user = await getAppUser();
   const supabase = await createClient();
   const schoolId = user.schoolId!;

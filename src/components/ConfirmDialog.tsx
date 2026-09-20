@@ -72,7 +72,7 @@ export function ConfirmDialog({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-navy/45 p-4 animate-fade-in"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-navy/45 p-0 animate-fade-in sm:items-center sm:p-4"
       role="presentation"
       onMouseDown={(e) => {
         if (confirming) return;
@@ -84,12 +84,12 @@ export function ConfirmDialog({
         aria-modal="true"
         aria-labelledby={titleId}
         aria-describedby={descId}
-        className="w-full max-w-md"
+        className="w-full max-w-md max-h-[90vh] overflow-y-auto sm:max-h-[85vh]"
         onMouseDown={(e) => e.stopPropagation()}
       >
         <Card
           className={cn(
-            "p-6 shadow-[0_12px_40px_rgba(27,42,74,0.18)]",
+            "rounded-b-none p-5 shadow-[0_12px_40px_rgba(27,42,74,0.18)] sm:rounded-xl sm:p-6",
             "animate-fade-up"
           )}
         >
@@ -102,12 +102,13 @@ export function ConfirmDialog({
 
           {children ? <div className="mt-4">{children}</div> : null}
 
-          <div className="mt-6 flex flex-wrap justify-end gap-2">
+          <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
             {!hideCancel ? (
               <Button
                 ref={cancelRef}
                 type="button"
                 variant="ghost"
+                className="w-full sm:w-auto"
                 disabled={confirming}
                 onClick={onCancel}
               >
@@ -118,6 +119,7 @@ export function ConfirmDialog({
               ref={confirmRef}
               type="button"
               variant={variant}
+              className="w-full sm:w-auto"
               disabled={confirming || confirmDisabled}
               onClick={onConfirm}
             >

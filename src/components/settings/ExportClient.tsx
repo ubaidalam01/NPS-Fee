@@ -75,21 +75,31 @@ export function ExportClient() {
   }
 
   return (
-    <div className="space-y-4 pb-16 lg:pb-0">
+    <div className="space-y-4">
       <PageHeader
         title="Data Export"
         description="One-click download of your school's own data"
       />
-      <Card className="max-w-lg space-y-4 p-6">
+      <Card className="max-w-lg space-y-4 p-4 sm:p-6">
         <p className="text-sm text-muted">
           Exports students, fee heads, fee structure, vouchers, and payments for
           this school only.
         </p>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="primary" onClick={exportExcel} disabled={busy}>
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+          <Button
+            variant="primary"
+            className="w-full sm:w-auto"
+            onClick={exportExcel}
+            disabled={busy}
+          >
             Download Excel
           </Button>
-          <Button variant="navy" onClick={exportCsv} disabled={busy}>
+          <Button
+            variant="navy"
+            className="w-full sm:w-auto"
+            onClick={exportCsv}
+            disabled={busy}
+          >
             Download CSV
           </Button>
         </div>

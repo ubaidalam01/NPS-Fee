@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { getSessionUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export type SchoolProfileUpdate = {
@@ -17,46 +17,27 @@ export type SaveSchoolProfileResult =
   | { ok: false; error: string };
 
 /**
- * Persist school profile. Uses the session to authorize, then writes with
- * service role so a missing/broken schools UPDATE RLS policy cannot silently
- * no-op (0 rows / HTTP 204). Still returns a clear error if nothing is saved.
+ * Persist school profile. Uses the cached session to authorize, then writes
+ * with service role so a missing/broken schools UPDATE RLS policy cannot
+ * silently no-op (0 rows / HTTP 204).
  */
 export async function saveSchoolProfile(
   input: SchoolProfileUpdate
 ): Promise<SaveSchoolProfileResult> {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await getSessionUser();
     if (!user) {
       return { ok: false, error: "Not signed in." };
     }
 
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("school_id, role")
-      .eq("id", user.id)
-      .single();
-
-    if (profileError || !profile) {
+    if (user.role !== "school_admin" && user.role !== "super_admin") {
       return {
         ok: false,
-        error: profileError?.message || "Could not load your profile.",
+        error: "You do not have permission to update school settings.",
       };
     }
 
-    if (
-      profile.role !== "school_admin" &&
-      profile.role !== "super_admin"
-    ) {
-      return { ok: false, error: "You do not have permission to update school settings." };
-    }
-
-    if (
-      profile.role === "school_admin" &&
-      profile.school_id !== input.schoolId
-    ) {
+    if (user.role === "school_admin" && user.schoolId !== input.schoolId) {
       return { ok: false, error: "You can only update your own school." };
     }
 

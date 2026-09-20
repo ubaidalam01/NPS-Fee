@@ -42,12 +42,18 @@
 html,
 body {
   height: 100%;
+  overflow-x: clip;
 }
 
 body {
   background: var(--bg);
   color: var(--navy);
   font-family: var(--font-plus-jakarta), system-ui, sans-serif;
+}
+
+/* iOS safe area for fixed bottom nav */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 ::-webkit-scrollbar {

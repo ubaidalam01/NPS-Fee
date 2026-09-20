@@ -27,7 +27,10 @@ export function MonthlyTrendChart({
   return (
     <div className="h-64 w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+        <LineChart
+          data={data}
+          margin={{ top: 8, right: 4, left: -8, bottom: 0 }}
+        >
           <CartesianGrid strokeDasharray="3 3" stroke="#e8eef2" />
           <XAxis
             dataKey="month"
@@ -83,8 +86,8 @@ export function PaymentStatusDonut({
         <PieChart>
           <Pie
             data={data}
-            innerRadius={70}
-            outerRadius={95}
+            innerRadius="45%"
+            outerRadius="70%"
             paddingAngle={3}
             dataKey="value"
             stroke="none"

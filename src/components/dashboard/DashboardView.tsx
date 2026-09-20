@@ -96,7 +96,7 @@ export function DashboardView({
   }[];
 }) {
   return (
-    <div className="space-y-6 pb-16 lg:pb-0">
+    <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-extrabold text-navy">Dashboard</h1>
         <p className="mt-1 text-sm text-muted">
@@ -104,7 +104,7 @@ export function DashboardView({
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard
           label="Today's Collection"
           value={formatPKR(kpis.today)}
@@ -170,21 +170,31 @@ export function DashboardView({
 
       <div>
         <p className="mb-3 text-sm font-bold text-navy">Quick Actions</p>
-        <div className="flex flex-wrap gap-2">
-          <Link href="/fee-collection">
-            <Button variant="primary">Collect Fees</Button>
+        <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap">
+          <Link href="/fee-collection" className="sm:contents">
+            <Button variant="primary" className="w-full sm:w-auto">
+              Collect Fees
+            </Button>
           </Link>
-          <Link href="/students">
-            <Button variant="navy">Add Student</Button>
+          <Link href="/students" className="sm:contents">
+            <Button variant="navy" className="w-full sm:w-auto">
+              Add Student
+            </Button>
           </Link>
-          <Link href="/fee-structure">
-            <Button variant="navy">Fee Structure</Button>
+          <Link href="/fee-structure" className="sm:contents">
+            <Button variant="navy" className="w-full sm:w-auto">
+              Fee Structure
+            </Button>
           </Link>
-          <Link href="/reports/pending">
-            <Button variant="navy">Pending Dues</Button>
+          <Link href="/reports/pending" className="sm:contents">
+            <Button variant="navy" className="w-full sm:w-auto">
+              Pending Dues
+            </Button>
           </Link>
-          <Link href="/settings/export">
-            <Button variant="navy">Export Data</Button>
+          <Link href="/settings/export" className="sm:contents">
+            <Button variant="navy" className="w-full sm:w-auto">
+              Export Data
+            </Button>
           </Link>
         </div>
       </div>
