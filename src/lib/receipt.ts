@@ -60,9 +60,12 @@ export function printReceipt(data: ReceiptData) {
   const logoUrl = data.schoolLogoUrl?.trim() || "";
   const logoBlock = logoUrl
     ? `<img class="logo" src="${escapeHtml(logoUrl)}" alt="" />`
-    : `<div class="logo-fallback" aria-hidden="true">${escapeHtml(
-        schoolInitial(data.schoolName)
-      )}</div>`;
+    : `<div class="logo-fallback" aria-hidden="true">
+        <svg class="paint" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52" aria-hidden="true">
+          <circle cx="26" cy="26" r="26" fill="#ffffff"/>
+        </svg>
+        <span>${escapeHtml(schoolInitial(data.schoolName))}</span>
+      </div>`;
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -71,6 +74,11 @@ export function printReceipt(data: ReceiptData) {
   <title>Receipt ${escapeHtml(data.receiptNo)}</title>
   <style>
     * { box-sizing: border-box; }
+    * {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      color-adjust: exact !important;
+    }
     body {
       margin: 0;
       padding: 16px;
@@ -86,6 +94,7 @@ export function printReceipt(data: ReceiptData) {
       overflow: hidden;
     }
     .header {
+      position: relative;
       display: flex;
       align-items: flex-start;
       justify-content: space-between;
@@ -93,6 +102,15 @@ export function printReceipt(data: ReceiptData) {
       background: #1B2A4A;
       color: #fff;
       padding: 18px 20px;
+      isolation: isolate;
+    }
+    .header > .paint {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      display: block;
     }
     .brand {
       display: flex;
@@ -100,6 +118,8 @@ export function printReceipt(data: ReceiptData) {
       gap: 12px;
       min-width: 0;
       flex: 1;
+      position: relative;
+      z-index: 1;
     }
     .logo, .logo-fallback {
       width: 52px;
@@ -108,6 +128,9 @@ export function printReceipt(data: ReceiptData) {
       flex-shrink: 0;
       object-fit: cover;
       background: #fff;
+      position: relative;
+      isolation: isolate;
+      overflow: hidden;
     }
     .logo-fallback {
       display: flex;
@@ -117,6 +140,18 @@ export function printReceipt(data: ReceiptData) {
       font-weight: 800;
       color: #1B2A4A;
       border: 2px solid #A8D842;
+    }
+    .logo-fallback > .paint {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      display: block;
+    }
+    .logo-fallback > span {
+      position: relative;
+      z-index: 1;
     }
     .brand-text { min-width: 0; }
     .brand-text h1 {
@@ -133,7 +168,12 @@ export function printReceipt(data: ReceiptData) {
       color: rgba(255,255,255,0.78);
     }
     .badge {
+      position: relative;
+      z-index: 1;
       flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       background: #A8D842;
       color: #1B2A4A;
       font-size: 11px;
@@ -141,6 +181,20 @@ export function printReceipt(data: ReceiptData) {
       letter-spacing: 0.04em;
       padding: 5px 12px;
       border-radius: 999px;
+      isolation: isolate;
+      overflow: hidden;
+    }
+    .badge > .paint {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      display: block;
+    }
+    .badge > span {
+      position: relative;
+      z-index: 1;
     }
     .body { padding: 18px 20px 20px; }
     .meta {
@@ -197,6 +251,7 @@ export function printReceipt(data: ReceiptData) {
       padding-left: 12px;
     }
     .total-box {
+      position: relative;
       margin-top: 14px;
       background: #f0f3f6;
       border-radius: 10px;
@@ -205,6 +260,21 @@ export function printReceipt(data: ReceiptData) {
       align-items: center;
       justify-content: space-between;
       gap: 12px;
+      isolation: isolate;
+      overflow: hidden;
+    }
+    .total-box > .paint {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      display: block;
+    }
+    .total-box .label,
+    .total-box .amount {
+      position: relative;
+      z-index: 1;
     }
     .total-box .label {
       font-size: 11px;
@@ -255,14 +325,45 @@ export function printReceipt(data: ReceiptData) {
       line-height: 1.4;
     }
     @media print {
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+      }
       body { padding: 0; }
       .sheet { border: none; border-radius: 0; max-width: none; }
+      .header {
+        background: #1B2A4A !important;
+        color: #fff !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .badge {
+        background: #A8D842 !important;
+        color: #1B2A4A !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .total-box {
+        background: #f0f3f6 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .logo-fallback {
+        background: #fff !important;
+        border-color: #A8D842 !important;
+        color: #1B2A4A !important;
+      }
+      .paint { display: block !important; }
     }
   </style>
 </head>
 <body>
   <div class="sheet">
     <div class="header">
+      <svg class="paint" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" aria-hidden="true">
+        <rect width="100%" height="100%" fill="#1B2A4A"/>
+      </svg>
       <div class="brand">
         ${logoBlock}
         <div class="brand-text">
@@ -270,7 +371,12 @@ export function printReceipt(data: ReceiptData) {
           ${addressLine ? `<p>${addressLine}</p>` : ""}
         </div>
       </div>
-      <span class="badge">CASH</span>
+      <span class="badge">
+        <svg class="paint" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" aria-hidden="true">
+          <rect width="100%" height="100%" rx="999" ry="999" fill="#A8D842"/>
+        </svg>
+        <span>CASH</span>
+      </span>
     </div>
 
     <div class="body">
@@ -325,6 +431,9 @@ export function printReceipt(data: ReceiptData) {
       </table>
 
       <div class="total-box">
+        <svg class="paint" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" aria-hidden="true">
+          <rect width="100%" height="100%" rx="10" ry="10" fill="#f0f3f6"/>
+        </svg>
         <span class="label">Total Paid</span>
         <span class="amount">${formatPKR(data.amount)}</span>
       </div>
